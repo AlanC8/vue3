@@ -1,16 +1,13 @@
-// src/composables/useDashboard.ts
-
 import { ref, computed, onMounted } from 'vue';
 import { format, startOfToday, isFuture, isSameDay, parseISO } from 'date-fns';
 
-// --- ИНТЕРФЕЙСЫ ---
 export interface Habit {
   id: number;
   name: string;
   description: string;
   time: string;
   completed: boolean;
-  date: string; // Храним дату как строку 'YYYY-MM-DD' для удобства
+  date: string; 
 }
 
 export interface DayData {
@@ -20,19 +17,14 @@ export interface DayData {
   isFuture: boolean;
 }
 
-const STORAGE_KEY = 'my-habits-app'; // Ключ для хранения в localStorage
+const STORAGE_KEY = 'my-habits-app'; 
 
-// --- ГЛАВНАЯ COMPOSABLE ФУНКЦИЯ ---
 export function useDashboard() {
   
-  // --- РЕАКТИВНОЕ СОСТОЯНИЕ ---
-  const habits = ref<Habit[]>([]); // Основной массив для всех привычек
+  const habits = ref<Habit[]>([]);
   const userData = ref({ name: 'ALAN' });
   const today = startOfToday();
 
-  // --- ЛОГИКА РАБОТЫ С LOCALSTORAGE (CRUD) ---
-
-  // 1. ПОЛУЧЕНИЕ (Read)
   function loadHabits() {
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (savedData) {
@@ -42,12 +34,10 @@ export function useDashboard() {
     }
   }
 
-  // Вспомогательная функция для сохранения
   function saveHabits() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(habits.value));
   }
   
-  // 2. ОБНОВЛЕНИЕ (Update)
   function toggleHabitStatus(habitId: number) {
     const habit = habits.value.find(h => h.id === habitId);
     if (!habit) return;
@@ -61,7 +51,6 @@ export function useDashboard() {
     saveHabits();
   }
 
-  // 3. ДОБАВЛЕНИЕ (Create)
   function addHabit(newHabitData: Omit<Habit, 'id' | 'completed'>) {
     const newHabit: Habit = {
       ...newHabitData,
@@ -72,18 +61,13 @@ export function useDashboard() {
     saveHabits();
   }
 
-  // 4. УДАЛЕНИЕ (Delete)
   function deleteHabit(habitId: number) {
     habits.value = habits.value.filter(h => h.id !== habitId);
     saveHabits();
   }
   
-  // Вызываем загрузку данных один раз при первом использовании
   onMounted(loadHabits);
 
-  // --- COMPUTED СВОЙСТВА ---
-
-  // Для DashboardView: генерируем 5 дней и фильтруем для них привычки
   const dailyHabits = computed<DayData[]>(() => {
     const result: DayData[] = [];
     for (let i = -2; i <= 2; i++) {
@@ -101,7 +85,6 @@ export function useDashboard() {
     return result;
   });
 
-  // Для DashboardView: вычисляем прогресс для каждого из 5 дней
   const overviewProgressData = computed(() => {
     return dailyHabits.value.map(day => {
       if (day.habits.length === 0) return 0;
@@ -110,7 +93,6 @@ export function useDashboard() {
     });
   });
 
-  // Для DashboardView: вычисляем стрик
   const streak = computed(() => {
     let currentStreak = 0;
     const todayDataIndex = dailyHabits.value.findIndex(d => isSameDay(d.date, today));
@@ -125,13 +107,11 @@ export function useDashboard() {
     return currentStreak;
   });
 
-  // Для TodayView: получаем привычки только на сегодня
   const todayHabits = computed(() => {
     const todayString = format(today, 'yyyy-MM-dd');
     return habits.value.filter(h => h.date === todayString);
   });
   
-  // Для TodayView: считаем прогресс на сегодня
   const todayProgress = computed(() => {
     const total = todayHabits.value.length;
     if (total === 0) return { completed: 0, total: 0 };
@@ -139,12 +119,10 @@ export function useDashboard() {
     return { completed, total };
   });
 
-  // Для DayView: функция для поиска дня по строке даты
   const getDayByDateString = (dateString: string) => {
     return dailyHabits.value.find(day => format(day.date, 'yyyy-MM-dd') === dateString);
   };
 
-  // --- Функция для создания демо-данных, если localStorage пуст ---
   function initializeDemoData() {
     const demoHabits: Habit[] = [];
     for (let i = -2; i <= 2; i++) {
@@ -162,8 +140,7 @@ export function useDashboard() {
     habits.value = demoHabits;
     saveHabits();
   }
-  
-  // --- ВОЗВРАЩАЕМ ВСЕ НЕОБХОДИМЫЕ ДАННЫЕ И ФУНКЦИИ ---
+
   return {
     // Общие данные и CRUD
     habits,
